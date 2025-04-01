@@ -39,8 +39,8 @@ def get_crtsh_data(domain):
         return list(subdomains)
     return []
 
-def scan_domain(domain):
-    """Perform domain scanning"""
+def discover_subdomains(domain):
+    """Stage 1: Discover subdomains"""
     try:
         clean_output_files(domain)
         
@@ -61,28 +61,52 @@ def scan_domain(domain):
         with open(f'output/domain_{domain}.txt', 'w') as f:
             f.write('\n'.join(all_domains))
         
+        results_queue.put({
+            'stage': 'subdomains',
+            'domains': all_domains,
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
+        
+    except Exception as e:
+        results_queue.put({'error': str(e)})
+
+def scan_live_hosts(domain):
+    """Stage 2: Scan live hosts with httpx"""
+    try:
         # Run httpx
         httpx_cmd = f"httpx -l output/domain_{domain}.txt -silent -tech-detect -status-code -o output/httpx_domain_{domain}.txt"
         subprocess.run(httpx_cmd, shell=True)
-        
-        # Run gau
-        gau_cmd = f"gau --threads 5 {domain} > output/gau_{domain}.txt"
-        subprocess.run(gau_cmd, shell=True)
         
         # Read results
         with open(f'output/httpx_domain_{domain}.txt', 'r') as f:
             httpx_results = f.read().splitlines()
         
+        results_queue.put({
+            'stage': 'httpx',
+            'results': httpx_results,
+            'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        })
+        
+    except Exception as e:
+        results_queue.put({'error': str(e)})
+
+def get_historical_urls(domain):
+    """Stage 3: Get historical URLs with gau"""
+    try:
+        # Run gau
+        gau_cmd = f"gau --threads 5 {domain} > output/gau_{domain}.txt"
+        subprocess.run(gau_cmd, shell=True)
+        
+        # Read results
         with open(f'output/gau_{domain}.txt', 'r') as f:
             gau_results = f.read().splitlines()
         
-        results = {
-            'httpx': httpx_results,
-            'gau': gau_results,
+        results_queue.put({
+            'stage': 'gau',
+            'domain': domain,
+            'results': gau_results,
             'timestamp': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        }
-        
-        results_queue.put(results)
+        })
         
     except Exception as e:
         results_queue.put({'error': str(e)})
@@ -94,14 +118,23 @@ def index():
 @app.route('/scan', methods=['POST'])
 def scan():
     domain = request.form.get('domain')
+    stage = request.form.get('stage')
+    
     if not domain:
         return jsonify({'error': 'Domain is required'})
     
-    # Start scanning in background
-    thread = threading.Thread(target=scan_domain, args=(domain,))
-    thread.start()
+    # Start appropriate stage in background
+    if stage == 'subdomains':
+        thread = threading.Thread(target=discover_subdomains, args=(domain,))
+    elif stage == 'httpx':
+        thread = threading.Thread(target=scan_live_hosts, args=(domain,))
+    elif stage == 'gau':
+        thread = threading.Thread(target=get_historical_urls, args=(domain,))
+    else:
+        return jsonify({'error': 'Invalid stage'})
     
-    return jsonify({'message': 'Scan started', 'domain': domain})
+    thread.start()
+    return jsonify({'message': f'{stage} scan started', 'domain': domain})
 
 @app.route('/results')
 def get_results():

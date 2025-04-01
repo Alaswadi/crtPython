@@ -23,7 +23,7 @@
                             <div class="input-group">
                                 <input type="text" class="form-control" id="domain" name="domain" 
                                        placeholder="Enter domain (e.g., example.com)" required>
-                                <button type="submit" class="btn btn-primary">Scan</button>
+                                <button type="submit" class="btn btn-primary">Find Subdomains</button>
                             </div>
                         </form>
 
@@ -31,13 +31,20 @@
                             <div class="spinner-border text-primary" role="status">
                                 <span class="visually-hidden">Loading...</span>
                             </div>
-                            <p class="mt-2">Scanning in progress...</p>
+                            <p class="mt-2" id="loadingText">Scanning in progress...</p>
                         </div>
 
                         <div id="results" class="d-none">
+                            <div class="mb-4">
+                                <button id="scanHttpx" class="btn btn-success mb-3">Scan Live Hosts</button>
+                            </div>
+
                             <ul class="nav nav-tabs mb-3" id="resultTabs" role="tablist">
                                 <li class="nav-item">
-                                    <a class="nav-link active" id="httpx-tab" data-bs-toggle="tab" href="#httpx" role="tab">HTTPX Results</a>
+                                    <a class="nav-link active" id="subdomains-tab" data-bs-toggle="tab" href="#subdomains" role="tab">Subdomains</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="httpx-tab" data-bs-toggle="tab" href="#httpx" role="tab">Live Hosts</a>
                                 </li>
                                 <li class="nav-item">
                                     <a class="nav-link" id="gau-tab" data-bs-toggle="tab" href="#gau" role="tab">Historical URLs</a>
@@ -45,7 +52,19 @@
                             </ul>
 
                             <div class="tab-content" id="resultTabsContent">
-                                <div class="tab-pane fade show active" id="httpx" role="tabpanel">
+                                <div class="tab-pane fade show active" id="subdomains" role="tabpanel">
+                                    <div class="table-responsive">
+                                        <table id="subdomainsTable" class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>Domain</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="httpx" role="tabpanel">
                                     <div class="table-responsive">
                                         <table id="httpxTable" class="table table-striped">
                                             <thead>
@@ -53,6 +72,7 @@
                                                     <th>URL</th>
                                                     <th>Status Code</th>
                                                     <th>Technology</th>
+                                                    <th>Actions</th>
                                                 </tr>
                                             </thead>
                                             <tbody></tbody>
