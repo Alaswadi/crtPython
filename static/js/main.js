@@ -204,6 +204,9 @@ $(document).ready(function() {
                         $('#httpxTable tbody').empty();
                         
                         response.results.forEach(function(result) {
+                            // Add debugging
+                            console.log('Processing httpx result:', result);
+                            
                             // Split the result into parts, handling the format: URL [status] [tech]
                             const matches = result.match(/^(.*?)\s*\[(.*?)\]\s*\[(.*?)\]$/);
                             if (matches) {
@@ -218,6 +221,21 @@ $(document).ready(function() {
                                         <td>${technology}</td>
                                         <td>
                                             <button class="btn btn-sm btn-info scan-gau" data-domain="${url}">
+                                                Find Historical URLs
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `);
+                            } else {
+                                // If the result doesn't match the expected format, try to display it anyway
+                                console.log('Result did not match expected format:', result);
+                                $('#httpxTable tbody').append(`
+                                    <tr>
+                                        <td><a href="${result}" target="_blank">${result}</a></td>
+                                        <td>N/A</td>
+                                        <td>N/A</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info scan-gau" data-domain="${result}">
                                                 Find Historical URLs
                                             </button>
                                         </td>
