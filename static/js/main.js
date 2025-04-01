@@ -225,9 +225,6 @@ $(document).ready(function() {
                                 `);
                             }
                         });
-                        
-                        // Switch to httpx tab
-                        $('#httpx-tab').tab('show');
                         initializeTables();
                         break;
 
@@ -242,9 +239,6 @@ $(document).ready(function() {
                                 </tr>
                             `);
                         });
-                        
-                        // Switch to gau tab
-                        $('#gau-tab').tab('show');
                         initializeTables();
                         break;
                 }

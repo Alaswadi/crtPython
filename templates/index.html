@@ -17,7 +17,7 @@
 
         <div class="row justify-content-center">
             <div class="col-md-8">
-                <div class="card shadow-sm">
+                <div class="card shadow-sm mb-4">
                     <div class="card-body">
                         <form id="scanForm" class="mb-4">
                             <div class="input-group">
@@ -33,64 +33,64 @@
                             </div>
                             <p class="mt-2" id="loadingText">Scanning in progress...</p>
                         </div>
+                    </div>
+                </div>
 
-                        <div id="results" class="d-none">
-                            <div class="mb-4">
-                                <button id="scanHttpx" class="btn btn-success mb-3">Scan Live Hosts</button>
+                <div id="results" class="d-none">
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Subdomains</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="subdomainsTable" class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Domain</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
                             </div>
+                        </div>
+                    </div>
 
-                            <ul class="nav nav-tabs mb-3" id="resultTabs" role="tablist">
-                                <li class="nav-item">
-                                    <a class="nav-link active" id="subdomains-tab" data-bs-toggle="tab" href="#subdomains" role="tab">Subdomains</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="httpx-tab" data-bs-toggle="tab" href="#httpx" role="tab">Live Hosts</a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" id="gau-tab" data-bs-toggle="tab" href="#gau" role="tab">Historical URLs</a>
-                                </li>
-                            </ul>
+                    <div class="card shadow-sm mb-4">
+                        <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">Live Hosts</h5>
+                            <button id="scanHttpx" class="btn btn-success">Scan Live Hosts</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="httpxTable" class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>URL</th>
+                                            <th>Status Code</th>
+                                            <th>Technology</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
 
-                            <div class="tab-content" id="resultTabsContent">
-                                <div class="tab-pane fade show active" id="subdomains" role="tabpanel">
-                                    <div class="table-responsive">
-                                        <table id="subdomainsTable" class="table table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th>Domain</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="tab-pane fade" id="httpx" role="tabpanel">
-                                    <div class="table-responsive">
-                                        <table id="httpxTable" class="table table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th>URL</th>
-                                                    <th>Status Code</th>
-                                                    <th>Technology</th>
-                                                    <th>Actions</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <div class="tab-pane fade" id="gau" role="tabpanel">
-                                    <div class="table-responsive">
-                                        <table id="gauTable" class="table table-striped">
-                                            <thead>
-                                                <tr>
-                                                    <th>URL</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody></tbody>
-                                        </table>
-                                    </div>
-                                </div>
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-white">
+                            <h5 class="mb-0">Historical URLs</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table id="gauTable" class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>URL</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody></tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
