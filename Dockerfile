@@ -1,9 +1,19 @@
 FROM python:3.11-slim
 
-# Install system dependencies
+# Install system dependencies and Go
 RUN apt-get update && apt-get install -y \
     git \
+    golang \
     && rm -rf /var/lib/apt/lists/*
+
+# Set Go environment
+ENV GOPATH /root/go
+ENV PATH $GOPATH/bin:$PATH
+
+# Install Go tools
+RUN go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
+    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
+    go install -v github.com/lc/gau/v2/cmd/gau@latest
 
 # Set working directory
 WORKDIR /app
