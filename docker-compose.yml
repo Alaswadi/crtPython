@@ -1,0 +1,10 @@
+version: '3.8'
+
+services:
+  subdomain-finder:
+    build: .
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./output:/app/output
+    restart: unless-stopped 

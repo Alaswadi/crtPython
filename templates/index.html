@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subdomain Finder</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body class="bg-light">
+    <div class="container py-5">
+        <div class="text-center mb-5">
+            <h1 class="display-4">Subdomain Finder</h1>
+            <p class="lead">Discover subdomains and analyze their technologies</p>
+        </div>
+
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-body">
+                        <form id="scanForm" class="mb-4">
+                            <div class="input-group">
+                                <input type="text" class="form-control" id="domain" name="domain" 
+                                       placeholder="Enter domain (e.g., example.com)" required>
+                                <button type="submit" class="btn btn-primary">Scan</button>
+                            </div>
+                        </form>
+
+                        <div id="loading" class="text-center d-none">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                            <p class="mt-2">Scanning in progress...</p>
+                        </div>
+
+                        <div id="results" class="d-none">
+                            <ul class="nav nav-tabs mb-3" id="resultTabs" role="tablist">
+                                <li class="nav-item">
+                                    <a class="nav-link active" id="httpx-tab" data-bs-toggle="tab" href="#httpx" role="tab">HTTPX Results</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" id="gau-tab" data-bs-toggle="tab" href="#gau" role="tab">Historical URLs</a>
+                                </li>
+                            </ul>
+
+                            <div class="tab-content" id="resultTabsContent">
+                                <div class="tab-pane fade show active" id="httpx" role="tabpanel">
+                                    <div class="table-responsive">
+                                        <table id="httpxTable" class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>URL</th>
+                                                    <th>Status Code</th>
+                                                    <th>Technology</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="tab-pane fade" id="gau" role="tabpanel">
+                                    <div class="table-responsive">
+                                        <table id="gauTable" class="table table-striped">
+                                            <thead>
+                                                <tr>
+                                                    <th>URL</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody></tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+</body>
+</html> 
