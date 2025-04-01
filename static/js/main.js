@@ -200,6 +200,9 @@ $(document).ready(function() {
                         break;
 
                     case 'httpx':
+                        // Clear existing results
+                        $('#httpxTable tbody').empty();
+                        
                         response.results.forEach(function(result) {
                             const parts = result.split(' [');
                             const url = parts[0];
@@ -219,10 +222,16 @@ $(document).ready(function() {
                                 </tr>
                             `);
                         });
+                        
+                        // Switch to httpx tab
+                        $('#httpx-tab').tab('show');
                         initializeTables();
                         break;
 
                     case 'gau':
+                        // Clear existing results
+                        $('#gauTable tbody').empty();
+                        
                         response.results.forEach(function(url) {
                             $('#gauTable tbody').append(`
                                 <tr>
@@ -230,6 +239,9 @@ $(document).ready(function() {
                                 </tr>
                             `);
                         });
+                        
+                        // Switch to gau tab
+                        $('#gau-tab').tab('show');
                         initializeTables();
                         break;
                 }
