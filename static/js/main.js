@@ -204,23 +204,26 @@ $(document).ready(function() {
                         $('#httpxTable tbody').empty();
                         
                         response.results.forEach(function(result) {
-                            const parts = result.split(' [');
-                            const url = parts[0];
-                            const statusCode = parts[1] ? parts[1].replace(']', '') : '';
-                            const technology = parts[2] ? parts[2].replace(']', '') : '';
+                            // Split the result into parts, handling the format: URL [status] [tech]
+                            const matches = result.match(/^(.*?)\s*\[(.*?)\]\s*\[(.*?)\]$/);
+                            if (matches) {
+                                const url = matches[1].trim();
+                                const statusCode = matches[2].trim();
+                                const technology = matches[3].trim();
 
-                            $('#httpxTable tbody').append(`
-                                <tr>
-                                    <td><a href="${url}" target="_blank">${url}</a></td>
-                                    <td>${statusCode}</td>
-                                    <td>${technology}</td>
-                                    <td>
-                                        <button class="btn btn-sm btn-info scan-gau" data-domain="${url}">
-                                            Find Historical URLs
-                                        </button>
-                                    </td>
-                                </tr>
-                            `);
+                                $('#httpxTable tbody').append(`
+                                    <tr>
+                                        <td><a href="${url}" target="_blank">${url}</a></td>
+                                        <td>${statusCode}</td>
+                                        <td>${technology}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-info scan-gau" data-domain="${url}">
+                                                Find Historical URLs
+                                            </button>
+                                        </td>
+                                    </tr>
+                                `);
+                            }
                         });
                         
                         // Switch to httpx tab

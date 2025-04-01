@@ -6,6 +6,7 @@ from flask import Flask, render_template, request, jsonify
 from datetime import datetime
 import threading
 import queue
+import re
 
 app = Flask(__name__)
 results_queue = queue.Queue()
@@ -70,6 +71,11 @@ def discover_subdomains(domain):
     except Exception as e:
         results_queue.put({'error': str(e)})
 
+def strip_ansi_codes(text):
+    """Remove ANSI color codes from text"""
+    ansi_escape = re.compile(r'\x1b\[[0-9;]*[a-zA-Z]')
+    return ansi_escape.sub('', text)
+
 def scan_live_hosts(domain):
     """Stage 2: Scan live hosts with httpx"""
     try:
@@ -77,9 +83,9 @@ def scan_live_hosts(domain):
         httpx_cmd = f"httpx -l output/domain_{domain}.txt -silent -tech-detect -status-code -o output/httpx_domain_{domain}.txt"
         subprocess.run(httpx_cmd, shell=True)
         
-        # Read results
+        # Read results and strip ANSI codes
         with open(f'output/httpx_domain_{domain}.txt', 'r') as f:
-            httpx_results = f.read().splitlines()
+            httpx_results = [strip_ansi_codes(line) for line in f.read().splitlines()]
         
         results_queue.put({
             'stage': 'httpx',
