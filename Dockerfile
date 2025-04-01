@@ -1,19 +1,31 @@
 FROM python:3.11-slim
 
-# Install system dependencies and Go
+# Install system dependencies
 RUN apt-get update && apt-get install -y \
     git \
-    golang \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Go environment
-ENV GOPATH /root/go
-ENV PATH $GOPATH/bin:$PATH
+# Create binary directory
+RUN mkdir -p /usr/local/bin
 
-# Install Go tools
-RUN go install -v github.com/projectdiscovery/subfinder/v2/cmd/subfinder@latest && \
-    go install -v github.com/projectdiscovery/httpx/cmd/httpx@latest && \
-    go install -v github.com/lc/gau/v2/cmd/gau@latest
+# Download and install subfinder
+RUN curl -LO https://github.com/projectdiscovery/subfinder/releases/download/v2.6.3/subfinder_2.6.3_linux_amd64.zip && \
+    unzip subfinder_2.6.3_linux_amd64.zip && \
+    mv subfinder /usr/local/bin/ && \
+    rm subfinder_2.6.3_linux_amd64.zip
+
+# Download and install httpx
+RUN curl -LO https://github.com/projectdiscovery/httpx/releases/download/v1.3.7/httpx_1.3.7_linux_amd64.zip && \
+    unzip httpx_1.3.7_linux_amd64.zip && \
+    mv httpx /usr/local/bin/ && \
+    rm httpx_1.3.7_linux_amd64.zip
+
+# Download and install gau
+RUN curl -LO https://github.com/lc/gau/releases/download/v2.1.2/gau_2.1.2_linux_amd64.tar.gz && \
+    tar -xzf gau_2.1.2_linux_amd64.tar.gz && \
+    mv gau /usr/local/bin/ && \
+    rm gau_2.1.2_linux_amd64.tar.gz
 
 # Set working directory
 WORKDIR /app
