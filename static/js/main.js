@@ -2,7 +2,6 @@ $(document).ready(function() {
     let subdomainsTable = null;
     let httpxTable = null;
     let gauTable = null;
-    let checkResultsInterval = null;
     let currentDomain = null;
 
     // Initialize DataTables
@@ -83,11 +82,7 @@ $(document).ready(function() {
                 }
 
                 // Start checking for results
-                if (checkResultsInterval) {
-                    clearInterval(checkResultsInterval);
-                }
-
-                checkResultsInterval = setInterval(checkResults, 2000);
+                checkSubdomainResults(domain);
             },
             error: function() {
                 alert('Error starting scan');
@@ -117,11 +112,8 @@ $(document).ready(function() {
                     return;
                 }
 
-                if (checkResultsInterval) {
-                    clearInterval(checkResultsInterval);
-                }
-
-                checkResultsInterval = setInterval(checkResults, 2000);
+                // Start checking for results
+                checkHttpxResults(currentDomain);
             },
             error: function() {
                 alert('Error starting httpx scan');
@@ -149,11 +141,8 @@ $(document).ready(function() {
                     return;
                 }
 
-                if (checkResultsInterval) {
-                    clearInterval(checkResultsInterval);
-                }
-
-                checkResultsInterval = setInterval(checkResults, 2000);
+                // Start checking for results
+                checkGauResults(domain);
             },
             error: function() {
                 alert('Error starting gau scan');
@@ -162,109 +151,141 @@ $(document).ready(function() {
         });
     }
 
-    // Check for results
-    function checkResults() {
+    // Check for subdomain results
+    function checkSubdomainResults(domain) {
         $.ajax({
             url: '/results',
             method: 'GET',
+            data: {
+                domain: domain,
+                stage: 'subdomains'
+            },
             success: function(response) {
                 if (response.error) {
                     alert('Error: ' + response.error);
                     $('#loading').addClass('d-none');
-                    clearInterval(checkResultsInterval);
                     return;
                 }
 
-                if (response.status === 'pending') {
-                    return;
-                }
-
-                // Clear interval as we have results
-                clearInterval(checkResultsInterval);
-
-                // Hide loading
-                $('#loading').addClass('d-none');
-
-                // Process results based on stage
-                switch(response.stage) {
-                    case 'subdomains':
-                        response.domains.forEach(function(domain) {
-                            $('#subdomainsTable tbody').append(`
-                                <tr>
-                                    <td>${domain}</td>
-                                </tr>
-                            `);
-                        });
-                        $('#results').removeClass('d-none');
-                        initializeTables();
-                        break;
-
-                    case 'httpx':
-                        // Clear existing results
-                        $('#httpxTable tbody').empty();
-                        
-                        response.results.forEach(function(result) {
-                            // Add debugging
-                            console.log('Processing httpx result:', result);
-                            
-                            // Split the result into parts, handling the format: URL [status] [tech]
-                            const matches = result.match(/^(.*?)\s*\[(.*?)\]\s*\[(.*?)\]$/);
-                            if (matches) {
-                                const url = matches[1].trim();
-                                const statusCode = matches[2].trim();
-                                const technology = matches[3].trim();
-
-                                $('#httpxTable tbody').append(`
-                                    <tr>
-                                        <td><a href="${url}" target="_blank">${url}</a></td>
-                                        <td>${statusCode}</td>
-                                        <td>${technology}</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-info scan-gau" data-domain="${url}">
-                                                Find Historical URLs
-                                            </button>
-                                        </td>
-                                    </tr>
-                                `);
-                            } else {
-                                // If the result doesn't match the expected format, try to display it anyway
-                                console.log('Result did not match expected format:', result);
-                                $('#httpxTable tbody').append(`
-                                    <tr>
-                                        <td><a href="${result}" target="_blank">${result}</a></td>
-                                        <td>N/A</td>
-                                        <td>N/A</td>
-                                        <td>
-                                            <button class="btn btn-sm btn-info scan-gau" data-domain="${result}">
-                                                Find Historical URLs
-                                            </button>
-                                        </td>
-                                    </tr>
-                                `);
-                            }
-                        });
-                        initializeTables();
-                        break;
-
-                    case 'gau':
-                        // Clear existing results
-                        $('#gauTable tbody').empty();
-                        
-                        response.results.forEach(function(url) {
-                            $('#gauTable tbody').append(`
-                                <tr>
-                                    <td><a href="${url}" target="_blank">${url}</a></td>
-                                </tr>
-                            `);
-                        });
-                        initializeTables();
-                        break;
+                if (response.status === 'success') {
+                    $('#loading').addClass('d-none');
+                    $('#results').removeClass('d-none');
+                    
+                    response.domains.forEach(function(domain) {
+                        $('#subdomainsTable tbody').append(`
+                            <tr>
+                                <td>${domain}</td>
+                            </tr>
+                        `);
+                    });
+                    
+                    initializeTables();
+                } else {
+                    setTimeout(() => checkSubdomainResults(domain), 2000);
                 }
             },
             error: function() {
                 alert('Error checking results');
                 $('#loading').addClass('d-none');
-                clearInterval(checkResultsInterval);
+            }
+        });
+    }
+
+    // Check for httpx results
+    function checkHttpxResults(domain) {
+        $.ajax({
+            url: '/results',
+            method: 'GET',
+            data: {
+                domain: domain,
+                stage: 'httpx'
+            },
+            success: function(response) {
+                if (response.error) {
+                    alert('Error: ' + response.error);
+                    $('#loading').addClass('d-none');
+                    return;
+                }
+
+                if (response.status === 'success') {
+                    $('#loading').addClass('d-none');
+                    
+                    // Clear existing results
+                    $('#httpxTable tbody').empty();
+                    
+                    response.results.forEach(function(result) {
+                        // Split the result into parts
+                        const matches = result.match(/^(.*?)\s*\[(.*?)\]\s*\[(.*?)\]$/);
+                        if (matches) {
+                            const url = matches[1].trim();
+                            const statusCode = matches[2].trim();
+                            const technology = matches[3].trim();
+
+                            $('#httpxTable tbody').append(`
+                                <tr>
+                                    <td><a href="${url}" target="_blank">${url}</a></td>
+                                    <td>${statusCode}</td>
+                                    <td>${technology}</td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info scan-gau" data-domain="${url}">
+                                            Find Historical URLs
+                                        </button>
+                                    </td>
+                                </tr>
+                            `);
+                        }
+                    });
+                    
+                    initializeTables();
+                } else {
+                    setTimeout(() => checkHttpxResults(domain), 2000);
+                }
+            },
+            error: function() {
+                alert('Error checking results');
+                $('#loading').addClass('d-none');
+            }
+        });
+    }
+
+    // Check for gau results
+    function checkGauResults(domain) {
+        $.ajax({
+            url: '/results',
+            method: 'GET',
+            data: {
+                domain: domain,
+                stage: 'gau'
+            },
+            success: function(response) {
+                if (response.error) {
+                    alert('Error: ' + response.error);
+                    $('#loading').addClass('d-none');
+                    return;
+                }
+
+                if (response.status === 'success') {
+                    $('#loading').addClass('d-none');
+                    
+                    // Clear existing results
+                    $('#gauTable tbody').empty();
+                    
+                    response.results.forEach(function(url) {
+                        $('#gauTable tbody').append(`
+                            <tr>
+                                <td><a href="${url}" target="_blank">${url}</a></td>
+                            </tr>
+                        `);
+                    });
+                    
+                    initializeTables();
+                } else {
+                    setTimeout(() => checkGauResults(domain), 2000);
+                }
+            },
+            error: function() {
+                alert('Error checking results');
+                $('#loading').addClass('d-none');
             }
         });
     }

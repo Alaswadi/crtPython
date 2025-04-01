@@ -7,9 +7,13 @@ from datetime import datetime
 import threading
 import queue
 import re
+from database import init_db, save_subdomains, save_live_hosts, save_historical_urls, get_subdomains, get_live_hosts, get_historical_urls
 
 app = Flask(__name__)
 results_queue = queue.Queue()
+
+# Initialize the database
+init_db()
 
 def clean_output_files(domain):
     """Clean up existing output files"""
@@ -117,6 +121,72 @@ def get_historical_urls(domain):
     except Exception as e:
         results_queue.put({'error': str(e)})
 
+def run_subfinder(domain):
+    """Run subfinder to find subdomains"""
+    try:
+        # Run subfinder
+        cmd = f"subfinder -d {domain} -silent"
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            subdomains = result.stdout.strip().split('\n')
+            # Save results to database
+            save_subdomains(domain, subdomains)
+            return subdomains
+        else:
+            return []
+    except Exception as e:
+        print(f"Error running subfinder: {str(e)}")
+        return []
+
+def run_httpx(domain):
+    """Run httpx to find live hosts"""
+    try:
+        # Get subdomains from database
+        subdomains = get_subdomains(domain)
+        if not subdomains:
+            return []
+            
+        # Create temporary file with subdomains
+        with open('temp_subdomains.txt', 'w') as f:
+            f.write('\n'.join(subdomains))
+        
+        # Run httpx
+        cmd = "httpx -l temp_subdomains.txt -silent -status-code -tech-detect"
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        
+        # Clean up temporary file
+        os.remove('temp_subdomains.txt')
+        
+        if result.returncode == 0:
+            results = result.stdout.strip().split('\n')
+            # Save results to database
+            save_live_hosts(domain, results)
+            return results
+        else:
+            return []
+    except Exception as e:
+        print(f"Error running httpx: {str(e)}")
+        return []
+
+def run_gau(domain):
+    """Run gau to find historical URLs"""
+    try:
+        # Run gau
+        cmd = f"gau {domain}"
+        result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
+        
+        if result.returncode == 0:
+            urls = result.stdout.strip().split('\n')
+            # Save results to database
+            save_historical_urls(domain, urls)
+            return urls
+        else:
+            return []
+    except Exception as e:
+        print(f"Error running gau: {str(e)}")
+        return []
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -129,26 +199,63 @@ def scan():
     if not domain:
         return jsonify({'error': 'Domain is required'})
     
-    # Start appropriate stage in background
-    if stage == 'subdomains':
-        thread = threading.Thread(target=discover_subdomains, args=(domain,))
-    elif stage == 'httpx':
-        thread = threading.Thread(target=scan_live_hosts, args=(domain,))
-    elif stage == 'gau':
-        thread = threading.Thread(target=get_historical_urls, args=(domain,))
-    else:
-        return jsonify({'error': 'Invalid stage'})
-    
-    thread.start()
-    return jsonify({'message': f'{stage} scan started', 'domain': domain})
+    try:
+        if stage == 'subdomains':
+            subdomains = run_subfinder(domain)
+            return jsonify({'status': 'success', 'stage': 'subdomains'})
+            
+        elif stage == 'httpx':
+            results = run_httpx(domain)
+            return jsonify({'status': 'success', 'stage': 'httpx'})
+            
+        elif stage == 'gau':
+            results = run_gau(domain)
+            return jsonify({'status': 'success', 'stage': 'gau'})
+            
+        else:
+            return jsonify({'error': 'Invalid stage'})
+            
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 @app.route('/results')
 def get_results():
+    domain = request.args.get('domain')
+    stage = request.args.get('stage')
+    
+    if not domain or not stage:
+        return jsonify({'error': 'Domain and stage are required'})
+    
     try:
-        results = results_queue.get_nowait()
-        return jsonify(results)
-    except queue.Empty:
-        return jsonify({'status': 'pending'})
+        if stage == 'subdomains':
+            results = get_subdomains(domain)
+            return jsonify({
+                'status': 'success',
+                'stage': 'subdomains',
+                'domains': results
+            })
+            
+        elif stage == 'httpx':
+            results = get_live_hosts(domain)
+            return jsonify({
+                'status': 'success',
+                'stage': 'httpx',
+                'results': [f"{url} [{status}] [{tech}]" for url, status, tech in results]
+            })
+            
+        elif stage == 'gau':
+            results = get_historical_urls(domain)
+            return jsonify({
+                'status': 'success',
+                'stage': 'gau',
+                'results': results
+            })
+            
+        else:
+            return jsonify({'error': 'Invalid stage'})
+            
+    except Exception as e:
+        return jsonify({'error': str(e)})
 
 if __name__ == '__main__':
     os.makedirs('output', exist_ok=True)
